@@ -10,7 +10,8 @@
 
 from distutils.core import setup, Extension
 
-# fall back to provided cpp file if Cython is not found
+# To generate pyvoro/voroplusplus.cpp, run
+#    $ cython pyvoro/voroplusplus.pyx
 extensions = [
     Extension("voroplusplus",
               sources=["pyvoro/voroplusplus.cpp",
