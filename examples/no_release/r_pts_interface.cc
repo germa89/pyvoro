@@ -40,9 +40,32 @@ int main() {
 		con.put(i,x,y,z);
 	}
 
-	// Sum up the volumes, and check that this matches the container volume
-	double vvol=con.sum_cell_volumes();
-	printf("Container volume : %g\n"
+	// Use the C++ interface to do custom computations
+	double cx,cy,cz,vvol=0;
+	voronoicell c;
+	c_loop_all cl(con);
+	if(cl.start()) do if(con.compute_cell(c,cl)) {
+
+		// Get particle position and ID
+		cl.pos(x,y,z);i=cl.pid();
+
+		// Calculate centroid
+		c.centroid(cx,cy,cz);
+		printf("Particle %2d at (% .3f,% .3f,% .3f), centroid at (% .3f,% .3f,% .3f)\n",
+		       i,x,y,z,x+cx,y+cy,z+cz);	
+
+		// Calculate volume and sum it
+		vvol+=c.volume();
+
+		// Do other calculations and store the information
+		// ...
+		// ...
+		// ...
+
+	} while(cl.inc());	
+
+	// Print the volume check
+	printf("\nContainer volume : %g\n"
 	       "Voronoi volume   : %g\n"
 	       "Difference       : %g\n",cvol,vvol,vvol-cvol);
 

@@ -7,23 +7,25 @@
 #include "voro++.hh"
 using namespace voro;
 
+#include <vector>
+using namespace std;
+
 // Set up constants for the container geometry
 const double x_min=-1,x_max=1;
 const double y_min=-1,y_max=1;
 const double z_min=-1,z_max=1;
-const double cvol=(x_max-x_min)*(y_max-y_min)*(z_max-z_min);
 
 // Set up the number of blocks that the container is divided into
 const int n_x=6,n_y=6,n_z=6;
 
 // Set the number of particles that are going to be randomly introduced
-const int particles=20;
+const int particles=1;
 
 // This function returns a random double between 0 and 1
 double rnd() {return double(rand())/RAND_MAX;}
 
 int main() {
-	int i;
+	int i,j,id,nv;
 	double x,y,z;
 
 	// Create a container with the geometry given above, and make it
@@ -41,10 +43,38 @@ int main() {
 	}
 
 	// Sum up the volumes, and check that this matches the container volume
-	double vvol=con.sum_cell_volumes();
-	printf("Container volume : %g\n"
-	       "Voronoi volume   : %g\n"
-	       "Difference       : %g\n",cvol,vvol,vvol-cvol);
+	c_loop_all cl(con);
+	vector<int> f_vert;
+	vector<double> v;
+	voronoicell c;	
+	if(cl.start()) do if(con.compute_cell(c,cl)) {
+		cl.pos(x,y,z);id=cl.pid();
+		printf("Particle %d:\n",id);
+
+		// Gather information about the computed Voronoi cell
+		c.face_vertices(f_vert);
+		c.vertices(x,y,z,v);
+
+		// Print vertex positions
+		for(i=0;i<v.size();i+=3) printf("Vertex %d : (%g,%g,%g)\n",i/3,v[i],v[i+1],v[i+2]);
+		puts("");
+
+		// Loop over all faces of the Voronoi cell
+		j=0;
+		while(j<f_vert.size()) {
+
+			// Number of vertices in this face
+			nv=f_vert[j];
+
+			// Print triangles
+			for(i=2;i<nv;i++)
+				printf("Triangle : (%d,%d,%d)\n",f_vert[j+1],f_vert[j+i],f_vert[j+i+1]);
+
+			// Move j to point at the next face
+			j+=nv+1;
+		}
+		puts("");
+	} while (cl.inc());
 
 	// Output the particle positions in gnuplot format
 	con.draw_particles("random_points_p.gnu");
