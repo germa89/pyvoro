@@ -9,16 +9,17 @@
 #
 
 from distutils.core import setup, Extension
+from Cython.Build import cythonize
+import os.path
 
-# fall back to provided cpp file if Cython is not found
+source_files = ['cell.cc', 'common.cc', 'container.cc', 'unitcell.cc', 
+                'v_compute.cc', 'c_loops.cc', 'v_base.cc', 'wall.cc',
+                'pre_container.cc', 'container_prd.cc']
+source_files = [os.path.join('src', fname) for fname in source_files]
+
 extensions = [
-    Extension("voroplusplus",
-              sources=["pyvoro/voroplusplus.cpp",
-                       "pyvoro/vpp.cpp",
-                       "src/voro++.cc"],
-              include_dirs=["src"],
-              language="c++",
-              )
+    Extension("pyvoro.voroplusplus", ["pyvoro/voroplusplus.pyx", "pyvoro/vpp.cpp"] + source_files,
+        include_dirs = ["pyvoro", "src"])
 ]
 
 setup(
@@ -31,7 +32,7 @@ setup(
     download_url="https://github.com/joe-jordan/pyvoro/tarball/v1.3.2",
     packages=["pyvoro",],
     package_dir={"pyvoro": "pyvoro"},
-    ext_modules=extensions,
+    ext_modules=cythonize(extensions),
     keywords=["geometry", "mathematics", "Voronoi"],
     classifiers=[],
 )
