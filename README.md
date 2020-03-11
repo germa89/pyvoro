@@ -20,6 +20,9 @@ radius values.
 *periodic boundary support*, note that each cell is returned in the frame of reference of its source
 point, so points can (and will) be outside the bounding box.
 
+*plotting function*. The 3D data can be plotted using the function `plot_3d_cells`
+
+
 Installation
 ------------
 

@@ -112,3 +112,85 @@ Output format is a list of cells as follows:
   
   return py_cells
 
+
+def plot_3d_cells(data, random_cell_colors=True, line3d_kwargs = {}, poly3d_kwargs = {}, scatter_kwargs = {}, **kwargs ):
+    """
+    Plot the cells given the data supplied by the function `pyvoro.compute_voronoi`. 
+    
+    Inputs
+    ------
+    - data: list of dicts. Output of function `pyvoro.compute_voronoi`.
+    - random_cell_colors = True. Assign random colors to the different cells.
+    - line3d_kwargs: Arguments for Line3DCollection
+    - poly3d_kwargs: Arguments for Poly3DCollection
+    - scatter_kwargs: Arguments for plt.scatter
+    - kwargs: in case the previous kwargs are not used, the function will try to extract them from kwarg. But this might generate using the common kwargs for all functions.
+    
+    Output
+    ------
+    - None
+    
+    """
+
+    # Importing
+    import inspect
+    import numpy as np
+    from matplotlib import pyplot as plt
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
+    
+    # filtering the args to the different plotting functions:
+    if not line3d_kwargs: 
+        line3d_args = [k for k, v in inspect.signature(Line3DCollection).parameters.items()]
+        line3d_kwargs = {k: kwargs.pop(k) for k in dict(kwargs) if k in line3d_args}
+
+    if not poly3d_kwargs: 
+        poly3d_args = [k for k, v in inspect.signature(Poly3DCollection).parameters.items()]
+        poly3d_kwargs = {k: kwargs.pop(k) for k in dict(kwargs) if k in poly3d_args}
+
+    if not scatter_kwargs: 
+        scatter_args = [k for k, v in inspect.signature(plt.scatter).parameters.items()]
+        scatter_kwargs = {k: kwargs.pop(k) for k in dict(kwargs) if k in scatter_args}
+
+    for each_cell in data: 
+        vertices = each_cell['vertices'] 
+        faces = each_cell['faces']
+
+        vertices_in_cell = []
+
+        for each_face in faces: 
+            vertices_face = each_face['vertices']
+            sub_faces_ = []
+
+            for each_vert in vertices_face:
+                sub_faces_.append(tuple(vertices[each_vert]))
+
+            # Vertices
+            vertices_in_cell.append(sub_faces_)
+
+            # Lines 
+            lines_=[]
+            for init_vert,final_vert in zip(vertices_face[:-1],vertices_face[1:]):
+                lines_.append([
+                                vertices[init_vert], # Initial point of the line. 
+                                vertices[final_vert] # Final point of the line
+                                ])            
+
+            # Appending the last segment which close the line. 
+            lines_.append([vertices[vertices_face[-1]],vertices[vertices_face[0]]]) 
+
+            # Plotting all lines in the face. 
+            ax.add_collection3d(Line3DCollection(lines_, **line3d_kwargs))
+
+        # Plotting the vertex independently 
+        x = [each_[0] for each_ in vertices]
+        y = [each_[1] for each_ in vertices]
+        z = [each_[2] for each_ in vertices]
+
+        # Plotting all vertices in each cell
+        ax.scatter(x,y,z, **scatter_kwargs)
+
+        # Plotting all faces in each cell
+        if random_cell_colors:
+            ax.add_collection3d(Poly3DCollection(vertices_in_cell, **poly3d_kwargs , facecolors=np.random.rand(3,)))
+        else:
+            ax.add_collection3d(Poly3DCollection(vertices_in_cell, **poly3d_kwargs))
